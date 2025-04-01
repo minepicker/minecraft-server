@@ -1,5 +1,5 @@
 {
   "native_dependencies": {
-    "@minecraft/common": "^1.0.0"
+    "@minecraft/common": "^1.1.0"
   }
 }
