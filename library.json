@@ -1,4 +1,7 @@
 {
+  "manual_dependencies": {
+    "@minecraft/vanilla-data": ">=1.20.70"
+  },
   "native_dependencies": {
     "@minecraft/common": "^1.1.0"
   }
