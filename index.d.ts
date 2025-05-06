@@ -15,7 +15,7 @@
  * ```json
  * {
  *   "module_name": "@minecraft/server",
- *   "version": "1.18.0"
+ *   "version": "1.19.0"
  * }
  * ```
  *
@@ -124,6 +124,37 @@ export enum ButtonState {
 export enum CustomComponentNameErrorReason {
     NoNamespace = 1,
     DisallowedNamespace = 2,
+}
+
+/**
+ * An enumeration for the various difficulty levels of
+ * Minecraft.
+ */
+export enum Difficulty {
+    /**
+     * @remarks
+     * Easy difficulty level.
+     *
+     */
+    Easy = 'Easy',
+    /**
+     * @remarks
+     * Hard difficulty level.
+     *
+     */
+    Hard = 'Hard',
+    /**
+     * @remarks
+     * Normal difficulty level.
+     *
+     */
+    Normal = 'Normal',
+    /**
+     * @remarks
+     * Peaceful difficulty level.
+     *
+     */
+    Peaceful = 'Peaceful',
 }
 
 /**
@@ -451,6 +482,8 @@ export enum EntityComponentTypes {
      */
     FrictionModifier = 'minecraft:friction_modifier',
     /**
+     * @deprecated This property is deprecated and will be removed in 2.0.0.
+     *
      * @remarks
      * Sets the offset from the ground that the entity is actually
      * at.
@@ -2542,6 +2575,7 @@ export class Block {
      *
      * @param steps
      * Number of steps above to step before returning.
+     * Defaults to: 1
      * @throws This function can throw errors.
      *
      * {@link LocationInUnloadedChunkError}
@@ -2556,6 +2590,7 @@ export class Block {
      *
      * @param steps
      * Number of steps below to step before returning.
+     * Defaults to: 1
      * @throws This function can throw errors.
      *
      * {@link LocationInUnloadedChunkError}
@@ -2620,6 +2655,7 @@ export class Block {
      *
      * @param steps
      * Number of steps to the east to step before returning.
+     * Defaults to: 1
      * @throws This function can throw errors.
      *
      * {@link LocationInUnloadedChunkError}
@@ -2636,8 +2672,9 @@ export class Block {
      * @param componentId
      * The identifier of the component (e.g.,
      * 'minecraft:inventory'). If no namespace prefix is specified,
-     * 'minecraft:' is assumed. Available component IDs can be
-     * found as part of the {@link BlockComponentTypes} enum.
+     * 'minecraft:' is assumed. Available component IDs are those
+     * in the {@link BlockComponentTypes} enum and custom component
+     * IDs registered with the {@link BlockComponentRegistry}.
      * @returns
      * Returns the component if it exists on the block, otherwise
      * undefined.
@@ -2656,9 +2693,11 @@ export class Block {
      * @param amount
      * Number of instances of this block to place in the item
      * stack.
+     * Defaults to: 1
      * @param withData
      * Whether additional data facets of the item stack are
      * included.
+     * Defaults to: false
      * @returns
      * An itemStack with the specified amount of items and data.
      * Returns undefined if block type is incompatible.
@@ -2822,6 +2861,7 @@ export class Block {
      *
      * @param steps
      * Number of steps to the north to step before returning.
+     * Defaults to: 1
      * @throws This function can throw errors.
      *
      * {@link LocationInUnloadedChunkError}
@@ -2907,6 +2947,7 @@ export class Block {
      *
      * @param steps
      * Number of steps to the south to step before returning.
+     * Defaults to: 1
      * @throws This function can throw errors.
      *
      * {@link LocationInUnloadedChunkError}
@@ -2921,6 +2962,7 @@ export class Block {
      *
      * @param steps
      * Number of steps to the west to step before returning.
+     * Defaults to: 1
      * @throws This function can throw errors.
      *
      * {@link LocationInUnloadedChunkError}
@@ -3238,8 +3280,6 @@ export class BlockFluidContainerComponent extends BlockComponent {
      * This function can't be called in read-only mode.
      *
      * @throws This function can throw errors.
-     *
-     * {@link Error}
      */
     addDye(dye: ItemType): void;
     /**
@@ -3249,8 +3289,6 @@ export class BlockFluidContainerComponent extends BlockComponent {
      * This function can't be called in read-only mode.
      *
      * @throws This function can throw errors.
-     *
-     * {@link Error}
      */
     getFluidType(): FluidType;
     /**
@@ -3260,8 +3298,6 @@ export class BlockFluidContainerComponent extends BlockComponent {
      * This function can't be called in read-only mode.
      *
      * @throws This function can throw errors.
-     *
-     * {@link Error}
      */
     setFluidType(fluidType: FluidType): void;
     /**
@@ -3272,8 +3308,6 @@ export class BlockFluidContainerComponent extends BlockComponent {
      * This function can't be called in read-only mode.
      *
      * @throws This function can throw errors.
-     *
-     * {@link Error}
      */
     setPotion(itemStack: ItemStack): void;
 }
@@ -3408,8 +3442,6 @@ export class BlockPermutation {
      * @returns
      * Whether this block is removed when touched by liquid.
      * @throws This function can throw errors.
-     *
-     * {@link Error}
      */
     canBeDestroyedByLiquidSpread(liquidType: LiquidType): boolean;
     /**
@@ -3422,8 +3454,6 @@ export class BlockPermutation {
      * @returns
      * Whether this block can have a liquid placed over it.
      * @throws This function can throw errors.
-     *
-     * {@link Error}
      */
     canContainLiquid(liquidType: LiquidType): boolean;
     /**
@@ -3445,6 +3475,7 @@ export class BlockPermutation {
      * @param amount
      * Number of instances of this block to place in the prototype
      * item stack.
+     * Defaults to: 1
      */
     getItemStack(amount?: number): ItemStack | undefined;
     /**
@@ -3499,8 +3530,6 @@ export class BlockPermutation {
      * @returns
      * Whether this block stops liquid from flowing.
      * @throws This function can throw errors.
-     *
-     * {@link Error}
      */
     isLiquidBlocking(liquidType: LiquidType): boolean;
     /**
@@ -3514,8 +3543,6 @@ export class BlockPermutation {
      * Whether this block is removed and spawns its item when
      * touched by liquid.
      * @throws This function can throw errors.
-     *
-     * {@link Error}
      */
     liquidSpreadCausesSpawn(liquidType: LiquidType): boolean;
     /**
@@ -3702,6 +3729,8 @@ export class BlockRecordPlayerComponent extends BlockComponent {
      *
      * This function can't be called in read-only mode.
      *
+     * @param startPlaying
+     * Defaults to: true
      * @throws This function can throw errors.
      */
     setRecord(recordItemType?: ItemType | string, startPlaying?: boolean): void;
@@ -3842,6 +3871,7 @@ export class BlockSignComponent extends BlockComponent {
      * The side of the sign to read the message from. If not
      * provided, this will return the message from the front side
      * of the sign.
+     * Defaults to: 0
      * @throws This function can throw errors.
      */
     getRawText(side?: SignSide): RawText | undefined;
@@ -3854,6 +3884,7 @@ export class BlockSignComponent extends BlockComponent {
      * The side of the sign to read the message from. If not
      * provided, this will return the message from the front side
      * of the sign.
+     * Defaults to: 0
      * @throws This function can throw errors.
      */
     getText(side?: SignSide): string | undefined;
@@ -3865,6 +3896,7 @@ export class BlockSignComponent extends BlockComponent {
      * @param side
      * The side of the sign to read the dye from. If not provided,
      * this will return the dye on the front side of the sign.
+     * Defaults to: 0
      * @throws This function can throw errors.
      */
     getTextDyeColor(side?: SignSide): DyeColor | undefined;
@@ -3884,6 +3916,7 @@ export class BlockSignComponent extends BlockComponent {
      * The side of the sign the message will be set on. If not
      * provided, the message will be set on the front side of the
      * sign.
+     * Defaults to: 0
      * @throws
      * Throws if the provided message is greater than 512
      * characters in length.
@@ -3898,10 +3931,12 @@ export class BlockSignComponent extends BlockComponent {
      * @param color
      * The dye color to apply to the sign or undefined to clear the
      * dye on the sign.
+     * Defaults to: null
      * @param side
      * The side of the sign the color will be set on. If not
      * provided, the color will be set on the front side of the
      * sign.
+     * Defaults to: 0
      * @throws This function can throw errors.
      */
     setTextDyeColor(color?: DyeColor, side?: SignSide): void;
@@ -5113,6 +5148,7 @@ export class Dimension {
      * or all of the block volume is outside of the loaded chunks.
      * Will only check the block locations that are within the
      * loaded chunks in the volume.
+     * Defaults to: false
      * @returns
      * Returns true if at least one block in the volume satisfies
      * the filter, false otherwise.
@@ -5265,6 +5301,7 @@ export class Dimension {
      * or all of the block volume is outside of the loaded chunks.
      * Will only check the block locations that are within the
      * loaded chunks in the volume.
+     * Defaults to: false
      * @returns
      * Returns the ListBlockVolume that contains all the block
      * locations that satisfied the block filter.
@@ -5405,6 +5442,57 @@ export class Dimension {
     getTopmostBlock(locationXZ: VectorXZ, minHeight?: number): Block | undefined;
     /**
      * @remarks
+     * Places the given feature into the dimension at the specified
+     * location.
+     *
+     * This function can't be called in read-only mode.
+     *
+     * @param featureName
+     * The string identifier for the feature.
+     * @param location
+     * Location to place the feature.
+     * @param shouldThrow
+     * Specifies if the function call will throw an error if the
+     * feature could not be placed.
+     * Note: The function call will always throw an error if using
+     * an unknown feature name or trying to place in a unloaded
+     * chunk.
+     * Defaults to: false
+     * @throws
+     * An error will be thrown if the feature name is invalid.
+     * An error will be thrown if the location is in an unloaded
+     * chunk.
+     *
+     * {@link Error}
+     *
+     * {@link minecraftcommon.InvalidArgumentError}
+     *
+     * {@link LocationInUnloadedChunkError}
+     */
+    placeFeature(featureName: string, location: Vector3, shouldThrow?: boolean): boolean;
+    /**
+     * @remarks
+     * Places the given feature rule into the dimension at the
+     * specified location.
+     *
+     * This function can't be called in read-only mode.
+     *
+     * @param featureRuleName
+     * The string identifier for the feature rule.
+     * @param location
+     * Location to place the feature rule.
+     * @throws
+     * An error will be thrown if the feature rule name is invalid.
+     * An error will be thrown if the location is in an unloaded
+     * chunk.
+     *
+     * {@link minecraftcommon.InvalidArgumentError}
+     *
+     * {@link LocationInUnloadedChunkError}
+     */
+    placeFeatureRule(featureRuleName: string, location: Vector3): boolean;
+    /**
+     * @remarks
      * Plays a sound for all players.
      *
      * This function can't be called in read-only mode.
@@ -5525,20 +5613,22 @@ export class Dimension {
      * Newly created entity at the specified location.
      * @throws This function can throw errors.
      *
+     * {@link Error}
+     *
      * {@link LocationInUnloadedChunkError}
      *
      * {@link LocationOutOfWorldBoundariesError}
      * @example spawnAdultHorse.ts
      * ```typescript
-     * import { DimensionLocation } from "@minecraft/server";
-     * import { Vector3Utils } from "@minecraft/math";
+     * import { DimensionLocation } from '@minecraft/server';
+     * import { Vector3Utils } from '@minecraft/math';
      *
      * function spawnAdultHorse(log: (message: string, status?: number) => void, targetLocation: DimensionLocation) {
-     *   log("Create a horse and triggering the ageable_grow_up event, ensuring the horse is created as an adult");
-     *   targetLocation.dimension.spawnEntity(
-     *     "minecraft:horse<minecraft:ageable_grow_up>",
-     *     Vector3Utils.add(targetLocation, { x: 0, y: 1, z: 0 })
-     *   );
+     *     log('Create a horse and triggering the ageable_grow_up event, ensuring the horse is created as an adult');
+     *     targetLocation.dimension.spawnEntity(
+     *         'minecraft:horse<minecraft:ageable_grow_up>',
+     *         Vector3Utils.add(targetLocation, { x: 0, y: 1, z: 0 })
+     *     );
      * }
      * ```
      * @example quickFoxLazyDog.ts
@@ -6349,6 +6439,7 @@ export class Entity {
      * @param useEffects
      * Whether to show any visual effects connected to the
      * extinguishing.
+     * Defaults to: true
      * @returns
      * Returns whether the entity was on fire.
      * @throws This function can throw errors.
@@ -6744,7 +6835,7 @@ export class Entity {
      *
      * {@link CommandError}
      *
-     * {@link Error}
+     * {@link InvalidEntityError}
      */
     runCommand(commandString: string): CommandResult;
     /**
@@ -6777,6 +6868,7 @@ export class Entity {
      * Whether side-effects should be applied (e.g. thawing freeze)
      * and other conditions such as rain or fire protection should
      * be taken into consideration.
+     * Defaults to: true
      * @returns
      * Whether the entity was set on fire. This can fail if seconds
      * is less than or equal to zero, the entity is wet or the
@@ -7492,6 +7584,8 @@ export class EntityFrictionModifierComponent extends EntityComponent {
 }
 
 /**
+ * @deprecated This class is deprecated and will be removed in 2.0.0.
+ *
  * Sets the offset from the ground that the entity is actually
  * at.
  */
@@ -7499,6 +7593,8 @@ export class EntityFrictionModifierComponent extends EntityComponent {
 export class EntityGroundOffsetComponent extends EntityComponent {
     private constructor();
     /**
+     * @deprecated This property is deprecated and will be removed in 2.0.0.
+     *
      * @remarks
      * Value of this particular ground offset. Note that this value
      * is effectively read only; setting the ground offset value
@@ -10424,8 +10520,6 @@ export class ItemCompostableComponent extends ItemComponent {
      *
      * @throws
      * Throws if value outside the range [1 - 100]
-     *
-     * {@link Error}
      */
     readonly compostingChance: number;
     static readonly componentId = 'minecraft:compostable';
@@ -10549,6 +10643,7 @@ export class ItemDurabilityComponent extends ItemComponent {
      * Unbreaking factor to consider in factoring the damage
      * chance. Incoming unbreaking parameter must be within the
      * range [0, 3].
+     * Defaults to: 0
      * @throws This function can throw errors.
      */
     getDamageChance(unbreakingEnchantmentLevel?: number): number;
@@ -10992,6 +11087,7 @@ export class ItemStack {
      * provided value will be clamped to the item's maximum stack
      * size. Note that certain items can only have one item in the
      * stack.
+     * Defaults to: 1
      * @throws
      * Throws if `itemType` is invalid, or if `amount` is outside
      * the range of 1-255.
@@ -11039,8 +11135,9 @@ export class ItemStack {
      * @param componentId
      * The identifier of the component (e.g., 'minecraft:food'). If
      * no namespace prefix is specified, 'minecraft:' is assumed.
-     * Available component IDs can be found as part of the {@link
-     * ItemComponentTypes} enum.
+     * Available component IDs are those in the {@link
+     * ItemComponentTypes} enum and custom component IDs registered
+     * with the {@link ItemComponentRegistry}.
      * @returns
      * Returns the component if it exists on the item stack,
      * otherwise undefined.
@@ -12274,8 +12371,6 @@ export class Player extends Entity {
      * Contains the player's device information.
      *
      * @throws This property can throw when used.
-     *
-     * {@link Error}
      */
     readonly clientSystemInfo: ClientSystemInfo;
     /**
@@ -12395,6 +12490,21 @@ export class Player extends Entity {
     addLevels(amount: number): number;
     /**
      * @remarks
+     * For this player, removes all overrides of any Entity
+     * Properties on the target Entity. This change is not applied
+     * until the next tick and will not apply to other players.
+     *
+     * This function can't be called in read-only mode.
+     *
+     * @param targetEntity
+     * The Entity whose Entity Property overrides are being
+     * cleared.
+     * @throws
+     * Throws if the entity is invalid.
+     */
+    clearPropertyOverridesForEntity(targetEntity: Entity): void;
+    /**
+     * @remarks
      * Retrieves the active gamemode for this player, if specified.
      *
      * @throws This function can throw errors.
@@ -12498,6 +12608,25 @@ export class Player extends Entity {
     queueMusic(trackId: string, musicOptions?: MusicOptions): void;
     /**
      * @remarks
+     * For this player, removes the override on an Entity Property.
+     * This change is not applied until the next tick and will not
+     * apply to other players.
+     *
+     * This function can't be called in read-only mode.
+     *
+     * @param targetEntity
+     * The Entity whose Entity Property override is being removed.
+     * @param identifier
+     * The Entity Property identifier.
+     * @throws
+     * Throws if the entity is invalid.
+     * Throws if an invalid identifier is provided.
+     * Throws if the provided value type does not match the
+     * property type.
+     */
+    removePropertyOverrideForEntity(targetEntity: Entity, identifier: string): void;
+    /**
+     * @remarks
      * Resets the level of the player.
      *
      * This function can't be called in read-only mode.
@@ -12515,6 +12644,10 @@ export class Player extends Entity {
      * This method can throw if the provided {@link RawMessage} is
      * in an invalid format. For example, if an empty `name` string
      * is provided to `score`.
+     *
+     * {@link InvalidEntityError}
+     *
+     * {@link RawMessageError}
      * @example nestedTranslation.ts
      * ```typescript
      * import { world, DimensionLocation } from "@minecraft/server";
@@ -12602,6 +12735,33 @@ export class Player extends Entity {
      * @throws This function can throw errors.
      */
     setGameMode(gameMode?: GameMode): void;
+    /**
+     * @remarks
+     * For this player, overrides an Entity Property on the target
+     * Entity to the provided value. This property must be client
+     * synced. This change is not applied until the next tick and
+     * will not apply to other players.
+     *
+     * This function can't be called in read-only mode.
+     *
+     * @param targetEntity
+     * The Entity whose Entity Property is being overriden.
+     * @param identifier
+     * The Entity Property identifier.
+     * @param value
+     * The override value. The provided type must be compatible
+     * with the type specified in the entity's definition.
+     * @throws
+     * Throws if the entity is invalid.
+     * Throws if an invalid identifier is provided.
+     * Throws if the provided value type does not match the
+     * property type.
+     * Throws if the provided value is outside the expected range
+     * (int, float properties).
+     * Throws if the provided string value does not match the set
+     * of accepted enum values (enum properties)
+     */
+    setPropertyOverrideForEntity(targetEntity: Entity, identifier: string, value: boolean | number | string): void;
     /**
      * @remarks
      * Sets the current starting spawn point for this particular
@@ -13265,8 +13425,6 @@ export class PlayerInputPermissions {
      * This function can't be called in read-only mode.
      *
      * @throws This function can throw errors.
-     *
-     * {@link Error}
      */
     isPermissionCategoryEnabled(permissionCategory: InputPermissionCategory): boolean;
     /**
@@ -14420,6 +14578,8 @@ export class ScreenDisplay {
      * This function can't be called in read-only mode.
      *
      * @throws This function can throw errors.
+     *
+     * {@link InvalidEntityError}
      */
     getHiddenHudElements(): HudElement[];
     /**
@@ -14427,6 +14587,8 @@ export class ScreenDisplay {
      * This function can't be called in read-only mode.
      *
      * @throws This function can throw errors.
+     *
+     * {@link InvalidEntityError}
      */
     hideAllExcept(hudElements?: HudElement[]): void;
     /**
@@ -14434,6 +14596,8 @@ export class ScreenDisplay {
      * This function can't be called in read-only mode.
      *
      * @throws This function can throw errors.
+     *
+     * {@link InvalidEntityError}
      */
     isForcedHidden(hudElement: HudElement): boolean;
     /**
@@ -14446,10 +14610,14 @@ export class ScreenDisplay {
      */
     isValid(): boolean;
     /**
+     * @deprecated This function is deprecated and will be removed in 2.0.0.
+     *
      * @remarks
      * This function can't be called in read-only mode.
      *
      * @throws This function can throw errors.
+     *
+     * {@link InvalidEntityError}
      */
     resetHudElements(): void;
     /**
@@ -14462,6 +14630,10 @@ export class ScreenDisplay {
      * @param text
      * New value for the action bar text.
      * @throws This function can throw errors.
+     *
+     * {@link InvalidEntityError}
+     *
+     * {@link RawMessageError}
      */
     setActionBar(text: (RawMessage | string)[] | RawMessage | string): void;
     /**
@@ -14477,6 +14649,8 @@ export class ScreenDisplay {
      * @param hudElements
      * Optional list of HUD elements to configure visibility for.
      * @throws This function can throw errors.
+     *
+     * {@link InvalidEntityError}
      */
     setHudVisibility(visible: HudVisibility, hudElements?: HudElement[]): void;
     /**
@@ -14489,6 +14663,12 @@ export class ScreenDisplay {
      * This function can't be called in read-only mode.
      *
      * @throws This function can throw errors.
+     *
+     * {@link minecraftcommon.ArgumentOutOfBoundsError}
+     *
+     * {@link InvalidEntityError}
+     *
+     * {@link RawMessageError}
      * @example setTitle.ts
      * ```typescript
      * import { world, DimensionLocation } from "@minecraft/server";
@@ -14554,6 +14734,10 @@ export class ScreenDisplay {
      * This function can't be called in read-only mode.
      *
      * @throws This function can throw errors.
+     *
+     * {@link InvalidEntityError}
+     *
+     * {@link RawMessageError}
      * @example countdown.ts
      * ```typescript
      * import { world, system, DimensionLocation } from "@minecraft/server";
@@ -14791,6 +14975,7 @@ export class Structure {
      * @param saveMode
      * Determines how the Structure should be saved. Defaults to
      * saving to the world.
+     * Defaults to: 1
      * @returns
      * Returns the newly created structure.
      * @throws
@@ -14827,9 +15012,11 @@ export class Structure {
      * The block location relative to the Structure's origin.
      * @param blockPermutation
      * The BlockPermutation to set.
+     * Defaults to: null
      * @param waterlogged
      * Specifies whether the block should be waterlogged. Air and
      * undefined blocks cannot be waterlogged.
+     * Defaults to: false
      * @throws
      * Throws if the type of block is StructureVoid.
      * Throws if the block is undefined and waterlogged is set to
@@ -14868,6 +15055,7 @@ export class StructureManager {
      * @param saveMode
      * How the Structure should be saved upon creation. Defaults to
      * StructureSaveMode.Memory.
+     * Defaults to: 0
      * @returns
      * Returns the newly created Structure.
      * @throws
@@ -14984,6 +15172,85 @@ export class StructureManager {
         location: Vector3,
         options?: StructurePlaceOptions,
     ): void;
+    /**
+     * @remarks
+     * Places a partial jigsaw structure in the world. This is
+     * useful for debugging connections between jigsaw blocks.
+     *
+     * This function can't be called in read-only mode.
+     *
+     * @param pool
+     * The identifier of the template pool to start from.
+     * @param targetJigsaw
+     * The name of the jigsaw block to start from. This block must
+     * be included in at least one of the starting pool structure
+     * templates.
+     * @param maxDepth
+     * The maximum recursion depth for the jigsaw structure.
+     * @param dimension
+     * The dimension to place the jigsaw structure in.
+     * @param location
+     * The location where the jigsaw structure will begin
+     * generating relative to the targetJigsaw block.
+     * @param options
+     * Optional settings to use when generating the jigsaw
+     * structure.
+     * @returns
+     * Returns a {@link BlockBoundingBox} object which represents
+     * the maximum bounds of the jigsaw structure.
+     * @throws
+     * Throws if maxDepth is outside of the range [1,20]
+     * Throws if generation fails due to invalid parameters or
+     * jigsaw configuration.
+     * Throws if the placement location contains blocks that are
+     * outside the world bounds.
+     *
+     * {@link PlaceJigsawError}
+     */
+    placeJigsaw(
+        pool: string,
+        targetJigsaw: string,
+        maxDepth: number,
+        dimension: Dimension,
+        location: Vector3,
+        options?: JigsawPlaceOptions,
+    ): BlockBoundingBox;
+    /**
+     * @remarks
+     * Places a jigsaw structure in the world.
+     *
+     * This function can't be called in read-only mode.
+     *
+     * @param identifier
+     * The identifier of the jigsaw structure.
+     * @param dimension
+     * The dimension to place the jigsaw structure in.
+     * @param location
+     * The location where the jigsaw structure will begin
+     * generating. Note that the y value will be overridden by the
+     * structure's start height unless the
+     * ignoreStarJigsawStructurePlaceOptions ignoreStartHeight
+     * option is set.
+     * @param options
+     * Optional settings to use when generating the jigsaw
+     * structure.
+     * @returns
+     * Returns a {@link BlockBoundingBox} object which represents
+     * the maximum bounds of the jigsaw structure.
+     * @throws
+     * Throws if generation fails due to invalid parameters or
+     * jigsaw configuration.
+     * Throws if the placement location contains blocks that are
+     * outside the world bounds.
+     *
+     * {@link PlaceJigsawError}
+     */
+    placeJigsawStructure(
+        identifier: string,
+        dimension: Dimension,
+        location: Vector3,
+        options?: JigsawStructurePlaceOptions,
+    ): BlockBoundingBox;
 }
 
 /**
@@ -15660,6 +15927,14 @@ export class World {
     getDefaultSpawnLocation(): Vector3;
     /**
      * @remarks
+     * Gets the difficulty from the world.
+     *
+     * @returns
+     * Returns the world difficulty.
+     */
+    getDifficulty(): Difficulty;
+    /**
+     * @remarks
      * Returns a dimension object.
      *
      * @param dimensionId
@@ -15945,6 +16220,16 @@ export class World {
      * {@link LocationOutOfWorldBoundariesError}
      */
     setDefaultSpawnLocation(spawnLocation: Vector3): void;
+    /**
+     * @remarks
+     * Sets the worlds difficulty.
+     *
+     * This function can't be called in read-only mode.
+     *
+     * @param difficulty
+     * The difficulty we want to set the world to.
+     */
+    setDifficulty(difficulty: Difficulty): void;
     /**
      * @remarks
      * Sets a specified property to a value.
@@ -16652,6 +16937,39 @@ export class WorldInitializeBeforeEventSignal {
      *
      */
     unsubscribe(callback: (arg0: WorldInitializeBeforeEvent) => void): void;
+}
+
+/**
+ * A BlockBoundingBox is an interface to an object which
+ * represents an AABB aligned rectangle.
+ * The BlockBoundingBox assumes that it was created in a valid
+ * state (min <= max) but cannot guarantee it (unless it was
+ * created using the associated {@link
+ * @minecraft/server.BlockBoundingBoxUtils} utility functions.
+ * The min/max coordinates represent the diametrically opposite
+ * corners of the rectangle.
+ * The BlockBoundingBox is not a representation of blocks - it
+ * has no association with any type, it is just a mathematical
+ * construct - so a rectangle with
+ * ( 0,0,0 ) -> ( 0,0,0 )
+ * has a size of ( 0,0,0 ) (unlike the very similar {@link
+ * BlockVolume} object)
+ */
+export interface BlockBoundingBox {
+    /**
+     * @remarks
+     * A {@link Vector3} that represents the largest corner of the
+     * rectangle
+     *
+     */
+    max: Vector3;
+    /**
+     * @remarks
+     * A {@link Vector3} that represents the smallest corner of the
+     * rectangle
+     *
+     */
+    min: Vector3;
 }
 
 /**
@@ -17869,6 +18187,56 @@ export interface ItemCustomComponent {
 }
 
 /**
+ * Provides additional options for {@link
+ * StructureManager.placeJigsaw}.
+ */
+export interface JigsawPlaceOptions {
+    /**
+     * @remarks
+     * Whether entities should be included in the structure.
+     * Defaults to true.
+     *
+     */
+    includeEntities?: boolean;
+    /**
+     * @remarks
+     * Whether the jigsaw blocks should be kept when generating the
+     * structure. Defaults to false.
+     *
+     */
+    keepJigsaws?: boolean;
+}
+
+/**
+ * Provides additional options for {@link
+ * StructureManager.placeJigsawStructure}.
+ */
+export interface JigsawStructurePlaceOptions {
+    /**
+     * @remarks
+     * Whether the start height defined in the jigsaw structure
+     * definition should be ignored and overridden with the
+     * specified y coordinate. Defaults to false.
+     *
+     */
+    ignoreStartHeight?: boolean;
+    /**
+     * @remarks
+     * Whether entities should be included in the structure.
+     * Defaults to true.
+     *
+     */
+    includeEntities?: boolean;
+    /**
+     * @remarks
+     * Whether the jigsaw blocks should be kept when generating the
+     * structure. Defaults to false.
+     *
+     */
+    keepJigsaws?: boolean;
+}
+
+/**
  * Less than operator.
  */
 export interface LessThanComparison {
@@ -18721,6 +19089,16 @@ export class NamespaceNameError extends Error {
      *
      */
     reason: NamespaceNameErrorReason;
+}
+
+// @ts-ignore Class inheritance allowed for native defined classes
+export class PlaceJigsawError extends Error {
+    private constructor();
+}
+
+// @ts-ignore Class inheritance allowed for native defined classes
+export class RawMessageError extends Error {
+    private constructor();
 }
 
 /**
