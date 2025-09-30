@@ -15,7 +15,7 @@
  * ```json
  * {
  *   "module_name": "@minecraft/server",
- *   "version": "2.1.0"
+ *   "version": "2.2.0"
  * }
  * ```
  *
@@ -110,6 +110,34 @@ export enum BlockVolumeIntersection {
      *
      */
     Intersects = 2,
+}
+
+/**
+ * An enum of error reasons relating to using {@link
+ * ItemBookComponent}.
+ */
+export enum BookErrorReason {
+    /**
+     * @remarks
+     * The requested page content exceeds the max page length of
+     * 256.
+     *
+     */
+    ExceedsMaxPageLength = 'ExceedsMaxPageLength',
+    /**
+     * @remarks
+     * The page could not be created as it would exceed the max
+     * page count of 50.
+     *
+     */
+    ExceedsMaxPages = 'ExceedsMaxPages',
+    /**
+     * @remarks
+     * The title being signed exceeds the maximum title length of
+     * 16.
+     *
+     */
+    ExceedsTitleLength = 'ExceedsTitleLength',
 }
 
 /**
@@ -1905,6 +1933,12 @@ export enum InputPermissionCategory {
  * function ItemStack.getComponent.
  */
 export enum ItemComponentTypes {
+    /**
+     * @remarks
+     * The minecraft:book component.
+     *
+     */
+    Book = 'minecraft:book',
     Compostable = 'minecraft:compostable',
     /**
      * @remarks
@@ -2785,12 +2819,14 @@ export type ItemComponentReturnType<T extends string> = T extends keyof ItemComp
     : ItemCustomComponentInstance;
 
 export type ItemComponentTypeMap = {
+    book: ItemBookComponent;
     compostable: ItemCompostableComponent;
     cooldown: ItemCooldownComponent;
     durability: ItemDurabilityComponent;
     dyeable: ItemDyeableComponent;
     enchantable: ItemEnchantableComponent;
     food: ItemFoodComponent;
+    'minecraft:book': ItemBookComponent;
     'minecraft:compostable': ItemCompostableComponent;
     'minecraft:cooldown': ItemCooldownComponent;
     'minecraft:durability': ItemDurabilityComponent;
@@ -4771,6 +4807,13 @@ export class Camera {
      * @throws This function can throw errors.
      */
     setDefaultCamera(cameraPreset: string, easeOptions?: EaseOptions): void;
+    /**
+     * @remarks
+     * This function can't be called in read-only mode.
+     *
+     * @throws This function can throw errors.
+     */
+    setFov(fovCameraOptions?: CameraFovOptions): void;
 }
 
 /**
@@ -5429,6 +5472,20 @@ export class ContainerSlot {
     getLore(): string[];
     /**
      * @remarks
+     * Returns the lore value - a secondary display string - for an
+     * ItemStack. String lore lines will be converted to a {@link
+     * RawMessage} and put under {@link RawMessage.text}.
+     *
+     * @returns
+     * An array of lore lines. If the item does not have lore,
+     * returns an empty array.
+     * @throws This function can throw errors.
+     *
+     * {@link InvalidContainerSlotError}
+     */
+    getRawLore(): RawMessage[];
+    /**
+     * @remarks
      * Returns all tags for the item in the slot.
      *
      * @returns
@@ -5572,9 +5629,11 @@ export class ContainerSlot {
      *
      * {@link minecraftcommon.ArgumentOutOfBoundsError}
      *
+     * {@link Error}
+     *
      * {@link InvalidContainerSlotError}
      */
-    setLore(loreList?: string[]): void;
+    setLore(loreList?: (RawMessage | string)[]): void;
 }
 
 /**
@@ -5906,8 +5965,6 @@ export class Dimension {
      * based on the given options (by default will find the first
      * solid block above).
      *
-     * This function can't be called in read-only mode.
-     *
      * @param location
      * Location to retrieve the block above from.
      * @param options
@@ -5920,8 +5977,6 @@ export class Dimension {
      * Gets the first block found below a given block location
      * based on the given options (by default will find the first
      * solid block below).
-     *
-     * This function can't be called in read-only mode.
      *
      * @param location
      * Location to retrieve the block below from.
@@ -6102,8 +6157,6 @@ export class Dimension {
     /**
      * @remarks
      * Returns the highest block at the given XZ location.
-     *
-     * This function can't be called in read-only mode.
      *
      * @param locationXZ
      * Location to retrieve the topmost block for.
@@ -7060,8 +7113,7 @@ export class Entity {
     /**
      * @remarks
      * Applies impulse vector to the current velocity of the
-     * entity. Note that this method throws an error if called on
-     * Players and will have no impact.
+     * entity.
      *
      * This function can't be called in read-only mode.
      *
@@ -7072,8 +7124,6 @@ export class Entity {
      * {@link minecraftcommon.ArgumentOutOfBoundsError}
      *
      * {@link InvalidEntityError}
-     *
-     * {@link minecraftcommon.UnsupportedFunctionalityError}
      * @example applyImpulse.ts
      * ```typescript
      * import { DimensionLocation } from "@minecraft/server";
@@ -7139,17 +7189,13 @@ export class Entity {
     clearDynamicProperties(): void;
     /**
      * @remarks
-     * Sets the current velocity of the Entity to zero. Note that
-     * this method throws an error if called on Players and will
-     * have no impact.
+     * Sets the current velocity of the Entity to zero.
      *
      * This function can't be called in read-only mode.
      *
      * @throws This function can throw errors.
      *
      * {@link InvalidEntityError}
-     *
-     * {@link minecraftcommon.UnsupportedFunctionalityError}
      * @example applyImpulse.ts
      * ```typescript
      * import { DimensionLocation } from "@minecraft/server";
@@ -10931,6 +10977,213 @@ export class InputInfo {
 }
 
 /**
+ * When present on an item, this item is a book item. Can
+ * access and modify the contents of the book and sign it.
+ */
+// @ts-ignore Class inheritance allowed for native defined classes
+export class ItemBookComponent extends ItemComponent {
+    private constructor();
+    /**
+     * @remarks
+     * The name of the author of the book if it is signed,
+     * otherwise undefined.
+     *
+     * @throws This property can throw when used.
+     *
+     * {@link InvalidItemStackError}
+     */
+    readonly author?: string;
+    /**
+     * @remarks
+     * The contents of pages in the book that are in string format.
+     * Entries not in string format will be undefined.
+     *
+     * @throws This property can throw when used.
+     *
+     * {@link InvalidItemStackError}
+     */
+    readonly contents: (string | undefined)[];
+    /**
+     * @remarks
+     * Determines whether the book has been signed or not.
+     *
+     * @throws This property can throw when used.
+     *
+     * {@link InvalidItemStackError}
+     */
+    readonly isSigned: boolean;
+    /**
+     * @remarks
+     * The amount of pages the book has.
+     *
+     * @throws This property can throw when used.
+     *
+     * {@link InvalidItemStackError}
+     */
+    readonly pageCount: number;
+    /**
+     * @remarks
+     * The contents of pages in the book that are in {@link
+     * RawMessage} format. Entries not in {@link RawMessage} format
+     * will be undefined.
+     *
+     * @throws This property can throw when used.
+     *
+     * {@link InvalidItemStackError}
+     */
+    readonly rawContents: (RawMessage | undefined)[];
+    /**
+     * @remarks
+     * The title of the book if it is signed, otherwise undefined.
+     *
+     * @throws This property can throw when used.
+     *
+     * {@link InvalidItemStackError}
+     */
+    readonly title?: string;
+    static readonly componentId = 'minecraft:book';
+    /**
+     * @remarks
+     * Gets the string format content of a page for a given index.
+     *
+     * @param pageIndex
+     * The index of the page.
+     * @returns
+     * The content of the page if a valid index is provided and it
+     * is in string format, otherwise returns undefined.
+     * @throws This function can throw errors.
+     *
+     * {@link InvalidItemStackError}
+     */
+    getPageContent(pageIndex: number): string | undefined;
+    /**
+     * @remarks
+     * Gets the {@link RawMessage} format content of a page for a
+     * given index.
+     *
+     * @param pageIndex
+     * The index of the page.
+     * @returns
+     * The content of the page if a valid index is provided and it
+     * is in {@link RawMessage} format, otherwise returns
+     * undefined.
+     * @throws This function can throw errors.
+     *
+     * {@link InvalidItemStackError}
+     */
+    getRawPageContent(pageIndex: number): RawMessage | undefined;
+    /**
+     * @remarks
+     * Inserts a page at a given index. Empty pages will be created
+     * if the index is greater than the current book size.
+     * Pages have a maximum limit of 256 characters for strings as
+     * well as the JSON representation of a {@link RawMessage}.
+     * Books have a maximum limit of 50 pages.
+     *
+     * This function can't be called in read-only mode.
+     *
+     * @param pageIndex
+     * The index of the page.
+     * @param content
+     * The content to set for the page. Can be a single string or
+     * {@link RawMessage} or an array of strings and/or {@link
+     * RawMessage}s
+     * @throws This function can throw errors.
+     *
+     * {@link BookError}
+     *
+     * {@link BookPageContentError}
+     *
+     * {@link InvalidItemStackError}
+     */
+    insertPage(pageIndex: number, content: (RawMessage | string)[] | RawMessage | string): void;
+    /**
+     * @remarks
+     * Removes a page at a given index. Existing pages following
+     * this page will be moved backward to fill the empty space.
+     *
+     * This function can't be called in read-only mode.
+     *
+     * @param pageIndex
+     * The index of the page.
+     * @throws This function can throw errors.
+     *
+     * {@link InvalidItemStackError}
+     */
+    removePage(pageIndex: number): void;
+    /**
+     * @remarks
+     * Sets the contents of the book's pages. Pre-existing pages
+     * will be cleared.
+     * Pages have a maximum limit of 256 characters for strings as
+     * well as the JSON representation of a {@link RawMessage}.
+     * Books have a maximum limit of 50 pages.
+     *
+     * This function can't be called in read-only mode.
+     *
+     * @param contents
+     * An array of each page's contents. Each page can be a single
+     * string or {@link RawMessage} or an array of strings and/or
+     * {@link RawMessage}s.
+     * @throws This function can throw errors.
+     *
+     * {@link BookError}
+     *
+     * {@link BookPageContentError}
+     *
+     * {@link InvalidItemStackError}
+     */
+    setContents(contents: ((RawMessage | string)[] | RawMessage | string)[]): void;
+    /**
+     * @remarks
+     * Sets or creates the content of a specific page. Empty pages
+     * will be created if the index is greater than the current
+     * book size.
+     * Pages have a maximum limit of 256 characters for strings as
+     * well as the JSON representation of a {@link RawMessage}.
+     * Books have a maximum limit of 50 pages.
+     *
+     * This function can't be called in read-only mode.
+     *
+     * @param pageIndex
+     * The index of the page.
+     * @param content
+     * The content to set for the page. Can be a single string or
+     * {@link RawMessage} or an array of strings and/or {@link
+     * RawMessage}s
+     * @throws This function can throw errors.
+     *
+     * {@link BookError}
+     *
+     * {@link BookPageContentError}
+     *
+     * {@link InvalidItemStackError}
+     */
+    setPageContent(pageIndex: number, content: (RawMessage | string)[] | RawMessage | string): void;
+    /**
+     * @remarks
+     * Signs a book giving it a title and author name. Once signed
+     * players can no longer directly edit the book.
+     * Titles have a maximum character limit of 16.
+     *
+     * This function can't be called in read-only mode.
+     *
+     * @param title
+     * The title to give the book.
+     * @param author
+     * The name of the book's author.
+     * @throws This function can throw errors.
+     *
+     * {@link BookError}
+     *
+     * {@link InvalidEntityError}
+     *
+     * {@link InvalidItemStackError}
+     */
+    signBook(title: string, author: string): void;
+}
+
+/**
  * Contains information related to a chargeable item completing
  * being charged.
  */
@@ -11977,6 +12230,17 @@ export class ItemStack {
     getLore(): string[];
     /**
      * @remarks
+     * Returns the lore value - a secondary display string - for an
+     * ItemStack. String lore lines will be converted to a {@link
+     * RawMessage} and put under {@link RawMessage.text}.
+     *
+     * @returns
+     * An array of lore lines. If the item does not have lore,
+     * returns an empty array.
+     */
+    getRawLore(): RawMessage[];
+    /**
+     * @remarks
      * Returns a set of tags associated with this item stack.
      *
      */
@@ -12137,6 +12401,8 @@ export class ItemStack {
      * @throws This function can throw errors.
      *
      * {@link minecraftcommon.ArgumentOutOfBoundsError}
+     *
+     * {@link Error}
      * @example diamondAwesomeSword.ts
      * ```typescript
      * import { EntityComponentTypes, ItemStack, Player } from '@minecraft/server';
@@ -12159,7 +12425,7 @@ export class ItemStack {
      * }
      * ```
      */
-    setLore(loreList?: string[]): void;
+    setLore(loreList?: (RawMessage | string)[]): void;
 }
 
 /**
@@ -12714,6 +12980,91 @@ export class ListBlockVolume extends BlockVolumeBase {
      * Array of block locations to be removed from container.
      */
     remove(locations: Vector3[]): void;
+}
+
+/**
+ * Manager for Loot Table related APIs. Allows for generation
+ * of drops from blocks and entities according to their loot
+ * tables.
+ */
+export class LootTableManager {
+    private constructor();
+    /**
+     * @remarks
+     * Generates loot from a given block as if it had been mined.
+     *
+     * @param block
+     * The block to generate loot from.
+     * @param tool
+     * Optional. The tool to use in the looting operation.
+     * @returns
+     * An array of item stacks dropped from the loot drop event.
+     * Can be empty if no loot dropped, or undefined if the
+     * provided tool is insufficient to mine the block.
+     * @throws
+     * Throws if the block is in an unloaded chunk, or if the
+     * block's position is outside of world bounds.
+     *
+     * {@link LocationInUnloadedChunkError}
+     *
+     * {@link LocationOutOfWorldBoundariesError}
+     *
+     * {@link UnloadedChunksError}
+     */
+    generateLootFromBlock(block: Block, tool?: ItemStack): ItemStack[] | undefined;
+    /**
+     * @remarks
+     * Generates loot from a given block permutation as if it had
+     * been mined.
+     *
+     * @param tool
+     * Optional. The tool to use in the looting operation.
+     * @returns
+     * An array of item stacks dropped from the loot drop event.
+     * Can be empty if no loot dropped, or undefined if the
+     * provided tool is insufficient to mine the block.
+     */
+    generateLootFromBlockPermutation(blockPermutation: BlockPermutation, tool?: ItemStack): ItemStack[] | undefined;
+    /**
+     * @remarks
+     * Generates loot from a given block type as if it had been
+     * mined.
+     *
+     * @param tool
+     * Optional. The tool to use in the looting operation.
+     * @returns
+     * An array of item stacks dropped from the loot drop event.
+     * Can be empty if no loot dropped, or undefined if the
+     * provided tool is insufficient to mine the block.
+     */
+    generateLootFromBlockType(scriptBlockType: BlockType, tool?: ItemStack): ItemStack[] | undefined;
+    /**
+     * @remarks
+     * Generates loot from given a entity as if it had been killed.
+     *
+     * @param tool
+     * Optional. The tool to use in the looting operation.
+     * @returns
+     * An array of item stacks dropped from the loot drop event.
+     * Can be empty if no loot dropped, or undefined if the entity
+     * was invalid.
+     * @throws This function can throw errors.
+     *
+     * {@link InvalidEntityError}
+     */
+    generateLootFromEntity(entity: Entity, tool?: ItemStack): ItemStack[] | undefined;
+    /**
+     * @remarks
+     * Generates loot from given a entity type as if it had been
+     * killed.
+     *
+     * @param tool
+     * Optional. The tool to use in the looting operation.
+     * @returns
+     * An array of item stacks dropped from the loot drop event.
+     * Can be empty if no loot dropped.
+     */
+    generateLootFromEntityType(entityType: EntityType, tool?: ItemStack): ItemStack[] | undefined;
 }
 
 /**
@@ -16287,8 +16638,6 @@ export class System {
      * Causes an event to fire within script with the specified
      * message ID and payload.
      *
-     * This function can't be called in read-only mode.
-     *
      * @param id
      * Identifier of the message to send. This is custom and
      * dependent on the kinds of behavior packs and content you may
@@ -16940,6 +17289,16 @@ export class World {
      * Throws if the given entity id is invalid.
      */
     getEntity(id: string): Entity | undefined;
+    /**
+     * @remarks
+     * Returns a manager capable of generating loot from an
+     * assortment of sources.
+     *
+     * @returns
+     * A loot table manager with a variety of loot generation
+     * methods.
+     */
+    getLootTableManager(): LootTableManager;
     /**
      * @remarks
      * Returns the MoonPhase for the current time.
@@ -18021,6 +18380,19 @@ export interface CameraFixedBoomOptions {
      *
      */
     viewOffset?: Vector2;
+}
+
+/**
+ * Used to change the field of view of the current camera.
+ */
+export interface CameraFovOptions {
+    easeOptions?: EaseOptions;
+    /**
+     * @remarks
+     * Set a value for the field of view.
+     *
+     */
+    fov?: number;
 }
 
 export interface CameraSetFacingOptions {
@@ -19839,6 +20211,49 @@ export class BlockCustomComponentReloadVersionError extends Error {
     private constructor();
 }
 
+/**
+ * Errors that can be thrown when using {@link
+ * ItemBookComponent}.
+ */
+// @ts-ignore Class inheritance allowed for native defined classes
+export class BookError extends Error {
+    private constructor();
+    /**
+     * @remarks
+     * The reason for the error.
+     *
+     * This property can be read in early-execution mode.
+     *
+     */
+    reason: BookErrorReason;
+}
+
+/**
+ * The error called if page content being set on an {@link
+ * ItemBookComponent} are invalid ie. exceeding the maximum
+ * page length.
+ */
+// @ts-ignore Class inheritance allowed for native defined classes
+export class BookPageContentError extends Error {
+    private constructor();
+    /**
+     * @remarks
+     * The index of the page requested to be modified.
+     *
+     * This property can be read in early-execution mode.
+     *
+     */
+    pageIndex: number;
+    /**
+     * @remarks
+     * The reason for the error.
+     *
+     * This property can be read in early-execution mode.
+     *
+     */
+    reason: BookErrorReason;
+}
+
 // @ts-ignore Class inheritance allowed for native defined classes
 export class CommandError extends Error {
     private constructor();
@@ -19946,6 +20361,23 @@ export class InvalidEntityError extends Error {
      *
      */
     type: string;
+}
+
+/**
+ * The error called when an item is invalid. This can occur
+ * when accessing components on a removed item.
+ */
+// @ts-ignore Class inheritance allowed for native defined classes
+export class InvalidItemStackError extends Error {
+    private constructor();
+    /**
+     * @remarks
+     * The type of the item that is now invalid.
+     *
+     * This property can be read in early-execution mode.
+     *
+     */
+    itemType: ItemType;
 }
 
 // @ts-ignore Class inheritance allowed for native defined classes
