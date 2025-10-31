@@ -15,7 +15,7 @@
  * ```json
  * {
  *   "module_name": "@minecraft/server",
- *   "version": "2.2.0"
+ *   "version": "2.3.0"
  * }
  * ```
  *
@@ -183,6 +183,50 @@ export enum CommandPermissionLevel {
      *
      */
     Owner = 4,
+}
+
+/**
+ * Reasons that the {@link
+ * @minecraft/server.ContainerRulesError} was thrown.
+ */
+export enum ContainerRulesErrorReason {
+    /**
+     * @remarks
+     * Thrown when trying to add item that was defined in {@link
+     * ContainerRules.bannedItems}.
+     *
+     */
+    BannedItem = 'BannedItem',
+    /**
+     * @remarks
+     * Thrown when trying to add item with `Storage Item` component
+     * to container with {@link
+     * ContainerRules.allowNestedStorageItems} set to false.
+     *
+     */
+    NestedStorageItem = 'NestedStorageItem',
+    /**
+     * @remarks
+     * Thrown when trying to add item not defined in non-empty
+     * {@link ContainerRules.allowedItems}.
+     *
+     */
+    NotAllowedItem = 'NotAllowedItem',
+    /**
+     * @remarks
+     * Thrown when trying to add item that pushed the containers
+     * weight over the {@link ContainerRules.weightLimit}.
+     *
+     */
+    OverWeightLimit = 'OverWeightLimit',
+    /**
+     * @remarks
+     * Thrown when trying to add item with zero weight defined by
+     * the `Storage Weight Modifier` component to container with a
+     * defined {@link ContainerRules.weightLimit}
+     *
+     */
+    ZeroWeightItem = 'ZeroWeightItem',
 }
 
 /**
@@ -1965,6 +2009,7 @@ export enum ItemComponentTypes {
      *
      */
     Food = 'minecraft:food',
+    Inventory = 'minecraft:inventory',
 }
 
 /**
@@ -2826,6 +2871,7 @@ export type ItemComponentTypeMap = {
     dyeable: ItemDyeableComponent;
     enchantable: ItemEnchantableComponent;
     food: ItemFoodComponent;
+    inventory: ItemInventoryComponent;
     'minecraft:book': ItemBookComponent;
     'minecraft:compostable': ItemCompostableComponent;
     'minecraft:cooldown': ItemCooldownComponent;
@@ -2833,7 +2879,21 @@ export type ItemComponentTypeMap = {
     'minecraft:dyeable': ItemDyeableComponent;
     'minecraft:enchantable': ItemEnchantableComponent;
     'minecraft:food': ItemFoodComponent;
+    'minecraft:inventory': ItemInventoryComponent;
 };
+
+/**
+ * Describes a type of biome.
+ */
+export class BiomeType {
+    private constructor();
+    /**
+     * @remarks
+     * Identifier of the biome type.
+     *
+     */
+    readonly id: string;
+}
 
 /**
  * Represents a block in a dimension. A block represents a
@@ -3109,6 +3169,22 @@ export class Block {
     getItemStack(amount?: number, withData?: boolean): ItemStack | undefined;
     /**
      * @remarks
+     * Returns the total brightness level of light shining on a
+     * certain block.
+     *
+     * This function can't be called in read-only mode.
+     *
+     * @returns
+     * The brightness level on the block.
+     * @throws This function can throw errors.
+     *
+     * {@link minecraftcommon.InvalidArgumentError}
+     *
+     * {@link LocationInUnloadedChunkError}
+     */
+    getLightLevel(): number;
+    /**
+     * @remarks
      * Returns the net redstone power of this block.
      *
      * @returns
@@ -3121,6 +3197,22 @@ export class Block {
      * {@link LocationOutOfWorldBoundariesError}
      */
     getRedstonePower(): number | undefined;
+    /**
+     * @remarks
+     * Returns the brightness level of light shining from the sky
+     * on a certain block.
+     *
+     * This function can't be called in read-only mode.
+     *
+     * @returns
+     * The brightness level on the block.
+     * @throws This function can throw errors.
+     *
+     * {@link minecraftcommon.InvalidArgumentError}
+     *
+     * {@link LocationInUnloadedChunkError}
+     */
+    getSkyLightLevel(): number;
     /**
      * @remarks
      * Returns a set of tags for a block.
@@ -4957,6 +5049,14 @@ export class Container {
     private constructor();
     /**
      * @remarks
+     * If these rules are defined other container operations will
+     * throw if they cause these rules to be invalidated. For
+     * example, adding a shulker box to a vanilla bundle.
+     *
+     */
+    readonly containerRules?: ContainerRules;
+    /**
+     * @remarks
      * Count of the slots in the container that are empty.
      *
      * @throws
@@ -4982,6 +5082,15 @@ export class Container {
      * Throws if the container is invalid.
      */
     readonly size: number;
+    /**
+     * @remarks
+     * The combined weight of all items in the container.
+     *
+     * @throws This property can throw when used.
+     *
+     * {@link InvalidContainerError}
+     */
+    readonly weight: number;
     /**
      * @remarks
      * Adds an item to the container. The item is placed in the
@@ -5581,12 +5690,30 @@ export class ContainerSlot {
     setCanPlaceOn(blockIdentifiers?: string[]): void;
     /**
      * @remarks
+     * Sets multiple dynamic properties with specific values.
+     *
+     * @param values
+     * A Record of key value pairs of the dynamic properties to
+     * set. If the data value is null, it will remove that property
+     * instead.
+     * @throws This function can throw errors.
+     *
+     * {@link minecraftcommon.ArgumentOutOfBoundsError}
+     *
+     * {@link InvalidContainerSlotError}
+     *
+     * {@link minecraftcommon.UnsupportedFunctionalityError}
+     */
+    setDynamicProperties(values: Record<string, boolean | number | string | Vector3 | undefined>): void;
+    /**
+     * @remarks
      * Sets a specified property to a value.
      *
      * @param identifier
      * The property identifier.
      * @param value
-     * Data value of the property to set.
+     * Data value of the property to set. If the value is null, it
+     * will remove the property instead.
      * @throws
      * Throws if the slot's container is invalid.
      *
@@ -5937,6 +6064,23 @@ export class Dimension {
     ): ListBlockVolume;
     /**
      * @remarks
+     * Returns the biome type at the specified location.
+     *
+     * @param location
+     * Location at which to check the biome.
+     * @throws
+     * An error will be thrown if the location is out of world
+     * bounds.
+     * An error will be thrown if the location is in an unloaded
+     * chunk.
+     *
+     * {@link LocationInUnloadedChunkError}
+     *
+     * {@link LocationOutOfWorldBoundariesError}
+     */
+    getBiome(location: Vector3): BiomeType;
+    /**
+     * @remarks
      * Returns a block instance at the given location.
      *
      * @param location
@@ -6139,6 +6283,22 @@ export class Dimension {
     getEntitiesFromRay(location: Vector3, direction: Vector3, options?: EntityRaycastOptions): EntityRaycastHit[];
     /**
      * @remarks
+     * Returns the total brightness level of light shining on a
+     * certain block position.
+     *
+     * @param location
+     * Location of the block we want to check the brightness of.
+     * @returns
+     * The brightness level on the block.
+     * @throws This function can throw errors.
+     *
+     * {@link minecraftcommon.InvalidArgumentError}
+     *
+     * {@link LocationInUnloadedChunkError}
+     */
+    getLightLevel(location: Vector3): number;
+    /**
+     * @remarks
      * Returns a set of players based on a set of conditions
      * defined via the EntityQueryOptions set of filter criteria.
      *
@@ -6156,6 +6316,22 @@ export class Dimension {
     getPlayers(options?: EntityQueryOptions): Player[];
     /**
      * @remarks
+     * Returns the brightness level of light shining from the sky
+     * on a certain block position.
+     *
+     * @param location
+     * Position of the block we want to check the brightness of.
+     * @returns
+     * The brightness level on the block.
+     * @throws This function can throw errors.
+     *
+     * {@link minecraftcommon.InvalidArgumentError}
+     *
+     * {@link LocationInUnloadedChunkError}
+     */
+    getSkyLightLevel(location: Vector3): number;
+    /**
+     * @remarks
      * Returns the highest block at the given XZ location.
      *
      * @param locationXZ
@@ -6166,6 +6342,15 @@ export class Dimension {
      * @throws This function can throw errors.
      */
     getTopmostBlock(locationXZ: VectorXZ, minHeight?: number): Block | undefined;
+    /**
+     * @remarks
+     * Returns true if the chunk at the given location is loaded
+     * (and valid for use with scripting).
+     *
+     * @param location
+     * Location to check if the chunk is loaded.
+     */
+    isChunkLoaded(location: Vector3): boolean;
     /**
      * @remarks
      * Places the given feature into the dimension at the specified
@@ -7700,12 +7885,28 @@ export class Entity {
     runCommand(commandString: string): CommandResult;
     /**
      * @remarks
+     * Sets multiple dynamic properties with specific values.
+     *
+     * @param values
+     * A Record of key value pairs of the dynamic properties to
+     * set. If the data value is null, it will remove that property
+     * instead.
+     * @throws This function can throw errors.
+     *
+     * {@link minecraftcommon.ArgumentOutOfBoundsError}
+     *
+     * {@link InvalidEntityError}
+     */
+    setDynamicProperties(values: Record<string, boolean | number | string | Vector3 | undefined>): void;
+    /**
+     * @remarks
      * Sets a specified property to a value.
      *
      * @param identifier
      * The property identifier.
      * @param value
-     * Data value of the property to set.
+     * Data value of the property to set. If the value is null, it
+     * will remove the property instead.
      * @throws This function can throw errors.
      *
      * {@link minecraftcommon.ArgumentOutOfBoundsError}
@@ -11874,6 +12075,23 @@ export class ItemFoodComponent extends ItemComponent {
 }
 
 /**
+ * This component is added to items with the `Storage Item`
+ * component. Can access and modify this items inventory
+ * container.
+ */
+// @ts-ignore Class inheritance allowed for native defined classes
+export class ItemInventoryComponent extends ItemComponent {
+    private constructor();
+    /**
+     * @throws This property can throw when used.
+     *
+     * {@link InvalidContainerError}
+     */
+    readonly container: Container;
+    static readonly componentId = 'minecraft:inventory';
+}
+
+/**
  * Contains information related to a chargeable item when the
  * player has finished using the item and released the build
  * action.
@@ -12086,6 +12304,15 @@ export class ItemStack {
      *
      */
     readonly typeId: string;
+    /**
+     * @remarks
+     * The total weight of all items in the stack plus the weight
+     * of all items in the items container which is defined with
+     * the `Storage Item` component. The weight per item can be
+     * modified by the `Storage Weight Modifier` component.
+     *
+     */
+    readonly weight: number;
     /**
      * @remarks
      * Creates a new instance of a stack of items for use in the
@@ -12371,13 +12598,29 @@ export class ItemStack {
     setCanPlaceOn(blockIdentifiers?: string[]): void;
     /**
      * @remarks
+     * Sets multiple dynamic properties with specific values.
+     *
+     * @param values
+     * A Record of key value pairs of the dynamic properties to
+     * set. If the data value is null, it will remove that property
+     * instead.
+     * @throws This function can throw errors.
+     *
+     * {@link minecraftcommon.ArgumentOutOfBoundsError}
+     *
+     * {@link minecraftcommon.UnsupportedFunctionalityError}
+     */
+    setDynamicProperties(values: Record<string, boolean | number | string | Vector3 | undefined>): void;
+    /**
+     * @remarks
      * Sets a specified property to a value. Note: This function
      * only works with non-stackable items.
      *
      * @param identifier
      * The property identifier.
      * @param value
-     * Data value of the property to set.
+     * Data value of the property to set. If the value is null, it
+     * will remove the property instead.
      * @throws
      * Throws if the item stack is stackable.
      *
@@ -13430,7 +13673,7 @@ export class Player extends Entity {
      * The Entity whose Entity Property overrides are being
      * cleared.
      * @throws
-     * Throws if the entity is invalid.
+     * Throws if the Entity is invalid.
      */
     clearPropertyOverridesForEntity(targetEntity: Entity): void;
     /**
@@ -17440,12 +17683,26 @@ export class World {
     setDifficulty(difficulty: Difficulty): void;
     /**
      * @remarks
+     * Sets multiple dynamic properties with specific values.
+     *
+     * @param values
+     * A Record of key value pairs of the dynamic properties to
+     * set. If the data value is null, it will remove that property
+     * instead.
+     * @throws This function can throw errors.
+     *
+     * {@link minecraftcommon.ArgumentOutOfBoundsError}
+     */
+    setDynamicProperties(values: Record<string, boolean | number | string | Vector3 | undefined>): void;
+    /**
+     * @remarks
      * Sets a specified property to a value.
      *
      * @param identifier
      * The property identifier.
      * @param value
-     * Data value of the property to set.
+     * Data value of the property to set. If the value is null, it
+     * will remove the property instead.
      * @throws
      * Throws if the given dynamic property identifier is not
      * defined.
@@ -18434,6 +18691,41 @@ export interface CameraTargetOptions {
      *
      */
     targetEntity: Entity;
+}
+
+/**
+ * Rules that if broken on container operations will throw an
+ * error.
+ */
+export interface ContainerRules {
+    /**
+     * @remarks
+     * Defines the items that are exclusively allowed in the
+     * container. If empty all items are allowed in the container.
+     *
+     */
+    allowedItems: string[];
+    /**
+     * @remarks
+     * Determines whether other storage items can be placed into
+     * the container.
+     *
+     */
+    allowNestedStorageItems: boolean;
+    /**
+     * @remarks
+     * Defines the items that are not allowed in the container.
+     *
+     */
+    bannedItems: string[];
+    /**
+     * @remarks
+     * Defines the maximum allowed total weight of all items in the
+     * storage item container. If undefined container has no weight
+     * limit.
+     *
+     */
+    weightLimit?: number;
 }
 
 /**
@@ -19901,6 +20193,21 @@ export interface ScriptEventMessageFilterOptions {
 export interface SpawnEntityOptions {
     /**
      * @remarks
+     * Optional boolean which determines if this entity should
+     * persist in the game world. Persistence prevents the entity
+     * from automatically despawning.
+     *
+     */
+    initialPersistence?: boolean;
+    /**
+     * @remarks
+     * Optional initial rotation, in degrees, to set on the entity
+     * when it spawns.
+     *
+     */
+    initialRotation?: number;
+    /**
+     * @remarks
      * Optional spawn event to send to the entity after it is
      * spawned.
      *
@@ -20260,12 +20567,20 @@ export class CommandError extends Error {
 }
 
 /**
- * Error thrown if {@link @minecraft/server.ContainerRules} are
- * broken on container operations.
+ * Error thrown if {@link ContainerRules} are broken on
+ * container operations.
  */
 // @ts-ignore Class inheritance allowed for native defined classes
 export class ContainerRulesError extends Error {
     private constructor();
+    /**
+     * @remarks
+     * The specific reason the error was thrown.
+     *
+     * This property can be read in early-execution mode.
+     *
+     */
+    reason: ContainerRulesErrorReason;
 }
 
 /**
